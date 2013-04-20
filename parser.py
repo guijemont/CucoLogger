@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
-import time
+import time, calendar
 from bs4 import BeautifulSoup
 import serial
 
 import serial_tools
+
+CSV_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class DataPoint(object):
     def __init__(self, time, power, temperature):
@@ -18,7 +20,7 @@ class DataPoint(object):
 
     def to_csv(self):
         try:
-            time_string = time.strftime("%F %T", time.gmtime(self.time))
+            time_string = time.strftime(CSV_TIME_FORMAT, time.gmtime(self.time))
         except TypeError:
             time_string = self.time
         return "%s,%s,%s" % (time_string, self.power, self.temperature)
@@ -30,7 +32,7 @@ class IteratorLogger(object):
 
     def __iter__(self):
         for item in self._iterator:
-            print >> self._log_file, "%s: %s" % (time.strftime("%F %T"), item)
+            print >> self._log_file, "%s: %s" % (time.strftime(CSV_TIME_FORMAT), item)
             yield item
 
 class CC128Parser(object):
@@ -57,6 +59,22 @@ class CC128LiveParser(CC128Parser):
         for entry in CC128Parser.parse_msg(self, xml_data):
             entry.time = time_stamp
             yield entry
+
+class CSVParser(object):
+    def parse_msg(self, data):
+        for data_line in data.split('\n'):
+            if not data_line:
+                continue
+            time_s, power_s, temp_s = data_line.split(',')
+            yield DataPoint(
+                    time=self._parse_time(time_s),
+                    power=int(power_s),
+                    temperature=float(temp_s)
+                    )
+
+    def _parse_time(self, time_string):
+        time_struct = time.strptime(time_string, CSV_TIME_FORMAT)
+        return calendar.timegm(time_struct)
 
 if __name__ == '__main__':
     import sys
