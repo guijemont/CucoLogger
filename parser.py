@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-import time, os, stat, termios
+import time
 from bs4 import BeautifulSoup
 import serial
+
+import serial_tools
 
 class IteratorLogger(object):
     def __init__(self, iterator, log_file_name):
@@ -44,15 +46,8 @@ class CC128FileParser(object):
                 pass
 
 class CC128LiveParser(CC128FileParser):
-    serial_port_configuration = {
-        'baudrate': 57600,
-        'bytesize': serial.EIGHTBITS,
-        'parity': serial.PARITY_NONE,
-        'stopbits': serial.STOPBITS_ONE
-    }
-    def __init__(self, serial_port, **kwargs):
-        connection = serial.Serial(port=serial_port,
-                **self.serial_port_configuration)
+    def __init__(self, serial_port=None, **kwargs):
+        connection = serial_tools.open_cc128(serial_port)
         CC128FileParser.__init__(self, connection, **kwargs)
 
     def __iter__(self):
@@ -73,26 +68,19 @@ class CC128LiveParser(CC128FileParser):
             yield entry
 
 def CC128Parser(file_name, **kwargs):
-    def is_serial(file_name):
-        file_info = os.stat(file_name)
-        if not stat.S_ISCHR(file_info.st_mode):
-            return False
-        try:
-            termios.tcgetattr(file(file_name))
-            return True
-        except termios.error:
-            return False
-
-    if is_serial(file_name):
+    if file_name is None or serial_tools.is_serial(file_name):
         return CC128LiveParser(file_name, **kwargs)
     else:
         return CC128FileParser(file(file_name), **kwargs)
 
 if __name__ == '__main__':
     import sys
-    file_name = sys.argv[1]
+    file_name = None
+    if len(sys.argv) > 1:
+        file_name = sys.argv[1]
     if len(sys.argv) > 2:
         log_file_name = sys.argv[2]
-    else: log_file_name = None
+    else:
+        log_file_name = None
     for entry in CC128Parser(file_name, log_file_name=log_file_name):
         print entry
