@@ -61,8 +61,9 @@ class CC128LiveParser(CC128FileParser):
     def _parse_msg(self, xml_data):
         # Time stamp from the CC128 does not have the date and its time may not
         # be accurate. Since we are live, we know that this entry is from
-        # "right now", so we can fix the time stamp.
-        time_stamp = time.strftime("%F %T")
+        # "right now", so we can fix the time stamp. Also, we provide it in an
+        # unambigous format: seconds since EPOCH.
+        time_stamp = int(time.time())
         for entry in CC128FileParser._parse_msg(self, xml_data):
             entry['time'] = time_stamp
             yield entry
