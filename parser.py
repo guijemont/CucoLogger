@@ -6,6 +6,23 @@ import serial
 
 import serial_tools
 
+class DataPoint(object):
+    def __init__(self, time, power, temperature):
+        self.time = time
+        self.power = power
+        self.temperature = temperature
+
+    def __repr__(self):
+        return "DataPoint(time=%s, power=%s, temperature=%s)" % (self.time,
+                self.power, self.temperature)
+
+    def to_csv(self):
+        try:
+            time_string = time.strftime("%F %T", time.gmtime(self.time))
+        except TypeError:
+            time_string = self.time
+        return "%s,%s,%s" % (time_string, self.power, self.temperature)
+
 class IteratorLogger(object):
     def __init__(self, iterator, log_file_name):
         self._log_file = file(log_file_name, 'a')
@@ -21,11 +38,11 @@ class CC128Parser(object):
         root = BeautifulSoup(xml_data)
         for xml_message in root.find_all('msg'):
             try:
-                yield {
-                    'time': xml_message.time.text,
-                    'power': int(xml_message.ch1.watts.text),
-                    'temperature': float(xml_message.tmpr.text)
-                }
+                yield DataPoint(
+                    time=xml_message.time.text,
+                    power=int(xml_message.ch1.watts.text),
+                    temperature=float(xml_message.tmpr.text)
+                    )
             except( ValueError, TypeError, AttributeError):
                 # badly formatted/empty entry (hist?), we just ignore it
                 pass
@@ -38,7 +55,7 @@ class CC128LiveParser(CC128Parser):
         # unambigous format: seconds since EPOCH.
         time_stamp = int(time.time())
         for entry in CC128Parser.parse_msg(self, xml_data):
-            entry['time'] = time_stamp
+            entry.time = time_stamp
             yield entry
 
 if __name__ == '__main__':
@@ -64,6 +81,6 @@ if __name__ == '__main__':
     try:
         for line in data:
             for entry in parser.parse_msg(line):
-                print entry
+                print entry.to_csv()
     except KeyboardInterrupt:
         print >> sys.stderr, "\nBye!"
