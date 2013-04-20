@@ -16,23 +16,8 @@ class IteratorLogger(object):
             print >> self._log_file, "%s: %s" % (time.strftime("%F %T"), item)
             yield item
 
-class CC128FileParser(object):
-    class ParseError(Exception):
-        pass
-
-    def __init__(self, xml_file, log_file_name=None):
-        if log_file_name is not None:
-            self._file = IteratorLogger(xml_file, log_file_name)
-        else:
-            self._file = xml_file
-
-    def __iter__(self):
-        # This makes the assumption that there is a <msg> entry per line.
-        for xml_data in self._file:
-            for entry in self._parse_msg(xml_data):
-                yield entry
-
-    def _parse_msg(self, xml_data):
+class CC128Parser(object):
+    def parse_msg(self, xml_data):
         root = BeautifulSoup(xml_data)
         for xml_message in root.find_all('msg'):
             try:
@@ -45,34 +30,16 @@ class CC128FileParser(object):
                 # badly formatted/empty entry (hist?), we just ignore it
                 pass
 
-class CC128LiveParser(CC128FileParser):
-    def __init__(self, serial_port=None, **kwargs):
-        connection = serial_tools.open_cc128(serial_port)
-        CC128FileParser.__init__(self, connection, **kwargs)
-
-    def __iter__(self):
-        # when parsing live, we might  want to stop with a KeyboardInterrupt
-        try:
-            for entry in CC128FileParser.__iter__(self):
-                yield entry
-        except KeyboardInterrupt:
-            print >> sys.stderr, "\nLive parsing got interrupted, returning"
-
-    def _parse_msg(self, xml_data):
+class CC128LiveParser(CC128Parser):
+    def parse_msg(self, xml_data):
         # Time stamp from the CC128 does not have the date and its time may not
         # be accurate. Since we are live, we know that this entry is from
         # "right now", so we can fix the time stamp. Also, we provide it in an
         # unambigous format: seconds since EPOCH.
         time_stamp = int(time.time())
-        for entry in CC128FileParser._parse_msg(self, xml_data):
+        for entry in CC128Parser.parse_msg(self, xml_data):
             entry['time'] = time_stamp
             yield entry
-
-def CC128Parser(file_name, **kwargs):
-    if file_name is None or serial_tools.is_serial(file_name):
-        return CC128LiveParser(file_name, **kwargs)
-    else:
-        return CC128FileParser(file(file_name), **kwargs)
 
 if __name__ == '__main__':
     import sys
@@ -83,5 +50,20 @@ if __name__ == '__main__':
         log_file_name = sys.argv[2]
     else:
         log_file_name = None
-    for entry in CC128Parser(file_name, log_file_name=log_file_name):
-        print entry
+
+    if file_name is None or serial_tools.is_serial(file_name):
+        data = serial_tools.open_cc128(file_name)
+        parser = CC128LiveParser()
+    else:
+        data = file(file_name, "r")
+        parser = CC128Parser();
+
+    if log_file_name is not None:
+        data = IteratorLogger(data, log_file_name)
+
+    try:
+        for line in data:
+            for entry in parser.parse_msg(line):
+                print entry
+    except KeyboardInterrupt:
+        print >> sys.stderr, "\nBye!"
