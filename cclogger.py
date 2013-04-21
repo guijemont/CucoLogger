@@ -15,6 +15,9 @@ class CCLogger(object):
         except KeyboardInterrupt:
             print >> sys.stderr, "\nCCLogger stopping operations because of keyboard interrupt"
 
+        for saver in self._savers:
+            saver.close()
+
 if __name__ == '__main__':
     import sys, os
     import parser, serial_tools, data_save
