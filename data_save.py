@@ -40,6 +40,9 @@ class RrdDataSaver(DataSaver):
 
     def __init__(self, directory):
         self._dir = os.path.abspath(directory)
+        if isinstance(self._dir, unicode):
+            # rrdtool wants strings and raises if it gets a unicode object
+            self._dir = self._dir.encode('UTF-8')
         self._power_file = os.path.join(self._dir, self.POWER_FILE)
         self._temperature_file = os.path.join(self._dir, self.TEMPERATURE_FILE)
 
