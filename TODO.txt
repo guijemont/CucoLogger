@@ -1,0 +1,18 @@
+ - compression: check if bz2 file already exists, bunzip it and resume from it
+   if it does
+ - propper logging
+ - config file (json?)
+ - (c) headers, license and push on github
+ - (minimal) option parsing?
+ - handle rrdcached
+ - upload to google drive https://developers.google.com/drive/
+ - graphing help/check out drraw http://web.taranis.org/drraw/ also: 
+
+ rrdtool graph test.png --width 800 --height 200 --right-axis 0.013:0 --vertical-label Watts --right-axis-label Celcius --daemon unix:$PWD/rrdcached.lock DEF:pow=tmp/power.rrd:power:AVERAGE DEF:temp=tmp/temperature.rrd:temperature:AVERAGE CDEF:tempscaled=temp,0.013,/ AREA:pow#FF0000 LINE:tempscaled#0000FF
+
+ - resilience on serial port issues
+ - make sure we write everything and clean up when we're killed
+ - daemonize
+ - make installable/distributable
+ - document better
+ - 1.0!
