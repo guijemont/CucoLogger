@@ -80,27 +80,26 @@ class RrdDataSaver(object):
                 "%d:%d" % (data_point.time, data_point.power))
 
 class CsvDataSaver(object):
-    def __init__(self, base_file_path):
-        self._base_file_path = os.path.abspath(base_file_path)
+    FILE_NAME_TEMPLATE = "power.%Y-%m-%d.csv"
+    def __init__(self, directory):
+        self._directory = os.path.abspath(directory)
         self._file = None
         self._file_path = None
-        self._suffix = None
 
-        base_dir = os.path.dirname(self._base_file_path)
-        if not os.path.isdir(base_dir):
-            os.makedirs(base_dir)
+        if not os.path.isdir(directory):
+            os.makedirs(directory)
 
-    def _make_suffix(self):
-        return time.strftime("%Y-%m-%d")
+    def _make_file_path(self):
+        file_path_template = os.path.join(self._directory, self.FILE_NAME_TEMPLATE)
+        return time.strftime(file_path_template)
 
     def _should_rotate(self):
-        return self._suffix != self._make_suffix()
+        return self._file_path != self._make_file_path()
 
     def _rotate(self):
         if self._file:
             self._file.close()
-        self._suffix = self._make_suffix()
-        self._file_path = self._base_file_path + self._suffix
+        self._file_path = self._make_file_path()
         print >> sys.stderr, "Rotating: now outputting to file %s" % self._file_path
         self._file = file(self._file_path, "a")
 
