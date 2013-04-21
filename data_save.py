@@ -12,7 +12,7 @@ class DataSaver(object):
         pass
 
 
-class RrdDataSaver(object):
+class RrdDataSaver(DataSaver):
     POWER_FILE = 'power.rrd'
     TEMPERATURE_FILE = 'temperature.rrd'
 
@@ -87,7 +87,7 @@ class RrdDataSaver(object):
         rrdtool.update(self._power_file,
                 "%d:%d" % (data_point.time, data_point.power))
 
-class CsvDataSaver(object):
+class CsvDataSaver(DataSaver):
     FILE_NAME_TEMPLATE = "power.%Y-%m-%d.csv"
     def __init__(self, directory, compress=False):
         self._directory = os.path.abspath(directory)
