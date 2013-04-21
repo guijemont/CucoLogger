@@ -1,4 +1,3 @@
- - config file (json?)
  - (c) headers, license and push on github
  - propper logging
  - (minimal) option parsing?
