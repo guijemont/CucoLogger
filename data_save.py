@@ -1,9 +1,10 @@
-import os
+import os, sys, time
 
 import rrdtool
 
 from parser import DataPoint
-class DataSaver(object):
+
+class RrdDataSaver(object):
     POWER_FILE = 'power.rrd'
     TEMPERATURE_FILE = 'temperature.rrd'
 
@@ -78,10 +79,40 @@ class DataSaver(object):
         rrdtool.update(self._power_file,
                 "%d:%d" % (data_point.time, data_point.power))
 
+class CsvDataSaver(object):
+    def __init__(self, base_file_path):
+        self._base_file_path = os.path.abspath(base_file_path)
+        self._file = None
+        self._file_path = None
+        self._suffix = None
+
+        base_dir = os.path.dirname(self._base_file_path)
+        if not os.path.isdir(base_dir):
+            os.makedirs(base_dir)
+
+    def _make_suffix(self):
+        return time.strftime("%Y-%m-%d")
+
+    def _should_rotate(self):
+        return self._suffix != self._make_suffix()
+
+    def _rotate(self):
+        if self._file:
+            self._file.close()
+        self._suffix = self._make_suffix()
+        self._file_path = self._base_file_path + self._suffix
+        print >> sys.stderr, "Rotating: now outputting to file %s" % self._file_path
+        self._file = file(self._file_path, "a")
+
+    def update(self, data_point):
+        if self._should_rotate():
+            self._rotate()
+        print >> self._file, data_point.to_csv()
+
 if __name__ == '__main__':
     import sys
     import parser, serial_tools
-    saver = DataSaver(sys.argv[1])
+    saver = RrdDataSaver(sys.argv[1])
     if len(sys.argv) > 2: # CSV file as parameter
         source = file(sys.argv[2], "r")
         _parser = parser.CSVParser()

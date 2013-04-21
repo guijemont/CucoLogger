@@ -16,9 +16,10 @@ class CCLogger(object):
             print >> sys.stderr, "\nCCLogger stopping operations because of keyboard interrupt"
 
 if __name__ == '__main__':
-    import sys
+    import sys, os
     import parser, serial_tools, data_save
     logger = CCLogger(serial_tools.open_cc128(),
                 parser.CC128LiveParser(),
-                (data_save.DataSaver(sys.argv[1]),))
+                (data_save.RrdDataSaver(sys.argv[1]),
+                data_save.CsvDataSaver(os.path.join(sys.argv[2], "data_file.csv."))))
     logger.run()
