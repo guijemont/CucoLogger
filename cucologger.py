@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # Copyright 2013 Guillaume Emont <guij@emont.org>
 #
-# This file is part of CCLogger
+# This file is part of CucoLogger
 #
-# CCLogger is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software
+# CucoLogger is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
 #
@@ -18,13 +18,13 @@
 
 import parser, serial_tools, data_save
 
-class CCLoggerConfigException(Exception):
+class CucoLoggerConfigException(Exception):
     pass
 
-class CCLogger(object):
+class CucoLogger(object):
     def __init__(self, config):
         if "savers" not in config or len(config['savers']) == 0:
-            raise CCLoggerConfigException("no savers in config")
+            raise CucoLoggerConfigException("no savers in config")
 
         self._savers = []
         for saver, saver_config in config['savers'].iteritems():
@@ -33,7 +33,7 @@ class CCLogger(object):
             elif saver == "CsvDataSaver":
                 constructor = data_save.CsvDataSaver
             else:
-                raise CCLoggerConfigException("Unknown saver: %s" % saver)
+                raise CucoLoggerConfigException("Unknown saver: %s" % saver)
             self._savers.append(constructor(**saver_config))
 
         self._source = serial_tools.open_cc128()
@@ -46,14 +46,14 @@ class CCLogger(object):
                     for saver in self._savers:
                         saver.update(data_point)
         except KeyboardInterrupt:
-            print >> sys.stderr, "\nCCLogger stopping operations because of keyboard interrupt"
+            print >> sys.stderr, "\nCucoLogger stopping operations because of keyboard interrupt"
 
         for saver in self._savers:
             saver.close()
 
 if __name__ == '__main__':
     import sys, os, json
-    config_file = "./cclogger.conf"
+    config_file = "./cucologger.conf"
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
 
@@ -64,5 +64,5 @@ if __name__ == '__main__':
     print "Loading configuration from %s" % config_file
     config = json.load(open(config_file))
 
-    logger = CCLogger(config)
+    logger = CucoLogger(config)
     logger.run()
