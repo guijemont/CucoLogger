@@ -43,6 +43,7 @@ class RrdDataSaver(DataSaver):
         if isinstance(self._dir, unicode):
             # rrdtool wants strings and raises if it gets a unicode object
             self._dir = self._dir.encode('UTF-8')
+        print "rrdtool: will save in", self._dir
         self._power_file = os.path.join(self._dir, self.POWER_FILE)
         self._temperature_file = os.path.join(self._dir, self.TEMPERATURE_FILE)
 
@@ -94,6 +95,7 @@ class CsvDataSaver(DataSaver):
     FILE_NAME_TEMPLATE = "power.%Y-%m-%d.csv"
     def __init__(self, directory, compress=False):
         self._directory = os.path.abspath(directory)
+        print "CSV: will save in: %s, compress: %s" % (directory, compress)
         self._file = None
         self._file_path = None
         self._compress = compress

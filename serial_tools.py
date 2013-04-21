@@ -37,6 +37,7 @@ def linux_find_pl2303():
 def open_cc128(file_name=None):
     if file_name is None:
         file_name = linux_find_pl2303()
+    print "Opening serial port", file_name
     return serial.Serial(port=file_name,
             **CC128_PORT_CONFIGURATION)
 
