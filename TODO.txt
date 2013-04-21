@@ -1,8 +1,6 @@
- - compression: check if bz2 file already exists, bunzip it and resume from it
-   if it does
- - propper logging
  - config file (json?)
  - (c) headers, license and push on github
+ - propper logging
  - (minimal) option parsing?
  - handle rrdcached
  - upload to google drive https://developers.google.com/drive/

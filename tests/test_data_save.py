@@ -90,6 +90,30 @@ class CsvTest(unittest.TestCase):
         expected = "%s\n%s\n" % (point1.to_csv(), point2.to_csv())
         self.assertEqual(data, expected)
 
+    def test_resume_bz2(self):
+        saver = CsvDataSaver(self._tempdir, compress=True)
+        template_path = os.path.join(self._tempdir, CsvDataSaver.FILE_NAME_TEMPLATE)
+        template_path += ".bz2"
+        file_path = time.strftime(template_path)
+
+        point1 = DataPoint(time=int(time.time()), temperature=18.3, power=350)
+        saver.update(point1)
+        saver.close()
+        del saver
+
+        time.sleep(1)
+
+        point2 = DataPoint(time=int(time.time()), temperature=18.5, power=420)
+        saver = CsvDataSaver(self._tempdir, compress=True)
+        saver.update(point2)
+        saver.close()
+        del saver
+
+        save_file = bz2.BZ2File(file_path, "r")
+        data = save_file.read()
+        expected = "%s\n%s\n" % (point1.to_csv(), point2.to_csv())
+        self.assertEqual(data, expected)
+
 if __name__ == '__main__':
     unittest.main()
 

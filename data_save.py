@@ -120,9 +120,25 @@ class CsvDataSaver(object):
         destination.close()
         os.remove(path)
 
+    def _uncompress_file(self, source, target):
+        print >> sys.stderr, "Decompressing %s to %s" % (source, target)
+        CHUNK_SIZE = 1024*1024
+        original = bz2.BZ2File(source, "r")
+        destination = open(target, "a")
+        while True:
+            data = original.read(CHUNK_SIZE)
+            if not data:
+                break
+            destination.write(data)
+        original.close()
+        destination.close()
+        os.remove(source)
+
     def _rotate(self):
         self.close()
         self._file_path = self._make_file_path()
+        if os.path.exists (self._file_path + '.bz2'):
+            self._uncompress_file(self._file_path + '.bz2', self._file_path)
         print >> sys.stderr, "Rotating: now outputting to file %s" % self._file_path
         self._file = open(self._file_path, "a")
 
