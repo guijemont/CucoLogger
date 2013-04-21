@@ -1,4 +1,3 @@
- - (c) headers, license and push on github
  - propper logging
  - (minimal) option parsing?
  - handle rrdcached
