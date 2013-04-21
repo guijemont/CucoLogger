@@ -1,8 +1,16 @@
-import os, sys, time
+import os, sys, time, bz2
 
 import rrdtool
 
 from parser import DataPoint
+
+class DataSaver(object):
+    def update(self, data_point):
+        raise NotImplementedError()
+
+    def close(self):
+        pass
+
 
 class RrdDataSaver(object):
     POWER_FILE = 'power.rrd'
@@ -81,10 +89,11 @@ class RrdDataSaver(object):
 
 class CsvDataSaver(object):
     FILE_NAME_TEMPLATE = "power.%Y-%m-%d.csv"
-    def __init__(self, directory):
+    def __init__(self, directory, compress=False):
         self._directory = os.path.abspath(directory)
         self._file = None
         self._file_path = None
+        self._compress = compress
 
         if not os.path.isdir(directory):
             os.makedirs(directory)
@@ -96,17 +105,42 @@ class CsvDataSaver(object):
     def _should_rotate(self):
         return self._file_path != self._make_file_path()
 
+    def _compress_file(self, path):
+        compressed_path = path + '.bz2'
+        print >> sys.stderr, "Compressing %s to %s" % (path, compressed_path)
+        CHUNK_SIZE = 1024*1024
+        original = open(path)
+        destination = bz2.BZ2File(compressed_path, "w")
+        while True:
+            data = original.read(CHUNK_SIZE)
+            if not data:
+                break
+            destination.write(data)
+        original.close()
+        destination.close()
+        os.remove(path)
+
     def _rotate(self):
-        if self._file:
-            self._file.close()
+        self.close()
         self._file_path = self._make_file_path()
         print >> sys.stderr, "Rotating: now outputting to file %s" % self._file_path
-        self._file = file(self._file_path, "a")
+        self._file = open(self._file_path, "a")
+
+    def close(self):
+        if self._file:
+            self._file.close()
+            if self._compress:
+                self._compress_file(self._file_path)
+        self._file = None
+        self._file_path = None
 
     def update(self, data_point):
         if self._should_rotate():
             self._rotate()
         print >> self._file, data_point.to_csv()
+
+    def __delete__(self):
+        self.close()
 
 if __name__ == '__main__':
     import sys
@@ -125,3 +159,4 @@ if __name__ == '__main__':
                 saver.update(data_point)
     except KeyboardInterrupt:
         print >> sys.stderr, "\nBye!"
+        saver.close()

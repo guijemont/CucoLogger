@@ -21,5 +21,5 @@ if __name__ == '__main__':
     logger = CCLogger(serial_tools.open_cc128(),
                 parser.CC128LiveParser(),
                 (data_save.RrdDataSaver(sys.argv[1]),
-                data_save.CsvDataSaver(sys.argv[2])))
+                data_save.CsvDataSaver(sys.argv[2], compress=True)))
     logger.run()
