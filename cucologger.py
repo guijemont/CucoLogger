@@ -32,6 +32,8 @@ class CucoLogger(object):
                 constructor = data_save.RrdDataSaver
             elif saver == "CsvDataSaver":
                 constructor = data_save.CsvDataSaver
+            elif saver == "ThermostatSaver":
+                constructor = data_save.ThermostatSaver
             else:
                 raise CucoLoggerConfigException("Unknown saver: %s" % saver)
             self._savers.append(constructor(**saver_config))
