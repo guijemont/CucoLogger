@@ -16,6 +16,7 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, time, bz2
+import socket, json
 
 import rrdtool
 
@@ -180,12 +181,28 @@ class CsvDataSaver(DataSaver):
     def __delete__(self):
         self.close()
 
+class CurrentTemperature(object):
+    def __init__(self, temperature):
+        self._temperature = temperature
+
+    def to_json(self):
+        temp_str = "%.1f" % self._temperature
+        return json.dumps({"current_temperature": temp_str})
+
+class ThermostatSaver(DataSaver):
+    def __init__(self, host='127.0.0.1', port=1234):
+        self._socket = socket.create_connection((host,port))
+
+    def update(self, data_point):
+        temperature = CurrentTemperature(data_point.temperature)
+        self._socket.sendall(temperature.to_json() + "\n")
+
 if __name__ == '__main__':
     import sys
     import parser, serial_tools
-    saver = RrdDataSaver(sys.argv[1])
-    if len(sys.argv) > 2: # CSV file as parameter
-        source = file(sys.argv[2], "r")
+    saver = ThermostatSaver()
+    if len(sys.argv) > 1: # CSV file as parameter
+        source = file(sys.argv[1], "r")
         _parser = parser.CSVParser()
     else: # live data
         source = serial_tools.open_cc128()
