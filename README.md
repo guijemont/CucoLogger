@@ -16,9 +16,16 @@ Cucologger cannot be installed yet. It has to be run from its own directory.
  - Linux kernel, the code that detects on what port the CC128 can be found is
    Linux specific (tested with 3.2.0)
  - python-rrdtool (tested with 1.4.7) http://oss.oetiker.ch/rrdtool/
- - BeautifulSoup (tested with 3.2.0)
+ - BeautifulSoup (tested with 4.0.2)
    http://www.crummy.com/software/BeautifulSoup
  - python-serial (tested with 2.5.2 ) http://pyserial.sourceforge.net
+
+
+On most debian-based distributions, you should be able to get all the
+dependencies with the following command (tested on Ubuntu 12.04):
+
+    sudo apt-get install python-rrdtool python-bs4 python-serial
+
 
 ### Configuration
 
