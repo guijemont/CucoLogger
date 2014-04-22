@@ -191,11 +191,16 @@ class CurrentTemperature(object):
 
 class ThermostatSaver(DataSaver):
     def __init__(self, host='127.0.0.1', port=1234):
-        self._socket = socket.create_connection((host,port))
+        try:
+            self._socket = socket.create_connection((host,port))
+        except socket.error:
+            print >> sys.stderr, "Warning: Could not connect to thermostat"
+            self._socket = None
 
     def update(self, data_point):
-        temperature = CurrentTemperature(data_point.temperature)
-        self._socket.sendall(temperature.to_json() + "\n")
+        if self._socket:
+            temperature = CurrentTemperature(data_point.temperature)
+            self._socket.sendall(temperature.to_json() + "\n")
 
 if __name__ == '__main__':
     import sys
